@@ -5,9 +5,7 @@ import { connect } from 'react-redux';
 import { Actions } from 'react-native-router-flux';
 import { bindActionCreators } from 'redux';
 
-import {
-  getUsersList,
-} from '../redux/modules/main.module';
+import { getUsersList } from '../redux/modules/main.module';
 
 import UserRow from '../components/shared/UserRow.component';
 import withSpinner from '../components/shared/withSpinner.component';
@@ -24,45 +22,42 @@ const ListViewWithSpinner = withSpinner(ListView);
   dispatch => bindActionCreators({ getUsersList }, dispatch)
 )
 export default class UsersList extends Component {
-  constructor(props) {
-    super(props);
+  state = { 
+    isLoading: true,
+    isDataReceived: false,
+  };
 
-    this.state = { 
-      isLoading: true,
-      isDataReceived: false,
-    };
+  componentDidMount = async () => {
+    await this.props.getUsersList()
 
-    this.handleUserPress = this.handleUserPress.bind(this);
-    this.handleEndReached = this.handleEndReached.bind(this);
-  } 
-
-  componentDidMount() {
-    this.props.getUsersList()
-      .then(() => this.setState({ 
-        isLoading: false, 
-        isDataReceived: true 
-      }));
+    this.setState({ 
+      isLoading: false, 
+      isDataReceived: true 
+    })
   }
 
-  handleEndReached() {
+  handleEndReached = () => {
     const { usersPageNumber } = this.props;
     const { isDataReceived } = this.state;
 
     if (isDataReceived) {
       this.props.getUsersList(usersPageNumber);
     }
-  }
+  };
 
-  handleUserPress(user) {
+  handleUserPress = (user) => {
     Actions.followersList({ 
       user,
       title: user.login,
     });
-  }
+  };
 
   render() {
     const { usersList = [] } = this.props;
-    const ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 });
+    const usersListLength = usersList.length;
+    const ds = new ListView.DataSource({
+      rowHasChanged: (r1, r2) => r1 !== r2,
+    });
 
     return (
       <ListViewWithSpinner 
@@ -74,8 +69,8 @@ export default class UsersList extends Component {
           <UserRow 
             user={user}
             key={user.id}
-            first={index = 0}
-            last={index = usersList.length - 1}
+            first={index === 0}
+            last={index === usersListLength - 1}
             onUserPress={this.handleUserPress}
           />
         )}
